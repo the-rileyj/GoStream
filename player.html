@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>a simple music player</title>      
+        <link rel="shortcut icon" type="image/png" href="favicon.ico">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+        <link href="https://fonts.googleapis.com/css?family=Oswald" type="text/css" rel="stylesheet">
+        <link href="https://unpkg.com/vuetify/dist/vuetify.min.css" rel="stylesheet"> 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.17.1/axios.min.js"></script>
+        <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    </head> 
+    <style>
+    body{
+        font-family: sans-serif，Verdana, Arial, Helvetica;
+        font-size: 10pt;
+    }
+
+    #playlist {
+        border-radius: 10px;
+        padding: 5px 5px 3px 5px;
+        width: 290px;
+        margin-left: 1px;
+        margin-top: 10px;
+        height: 500px;
+        overflow: auto;
+    }
+
+    #navb {
+        background-color: rgb(0, 128, 90);
+    }
+
+    #songs {
+        background-color: #EEFFEE;
+    }
+
+    #title {
+        background-color: #EEFFEE;
+        margin: 0 0 0 0;
+        padding-right: 1rem;
+    }
+
+    #tb:focus {
+        outline: none;
+    }
+
+    #tb {
+        background-color: #EEFFEE;
+        border: 0 none;
+        color: black;
+    }
+
+    .tb {
+        margin-top: 2rem;
+    }
+
+    .sb {
+        padding-left: 0!important;
+        padding-right: 0!important;
+    }
+
+    .btn {
+        width: 100%;
+        font-size: .5rem;
+        overflow: hidden;
+        background: #EEFFEE;
+        font-weight: bold;
+        color: black;
+        text-align: center;
+        margin: 0 0 0 0;
+    }
+
+    .btn:focus {
+        outline: none;
+    }
+
+    #control {
+        background-color: #EEFFEE;
+        margin-top: 1rem;
+    }
+
+    #search {
+        margin-top: 1rem;
+        border: 0 none;
+        -webkit-appearance:none;
+        -moz-appearance:none;
+        appearance:none;    
+        width: 100%;
+        height: 1.75rem;
+        font-size: .5rem;
+        overflow: auto;
+        background: #EEFFEE;
+        font-weight: bold;
+        color: black;
+        margin: 0 0 0 0!important;
+    }
+
+    #search:focus {
+        outline: none!important;
+        box-shadow: none;/*rgba(17, 15, 15, .25);*/
+    }
+
+    #playlist, a {
+        display: block;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 2px;
+    }
+
+    #playlist a.file { background: #66CDAA;}
+     
+    #playlist { background: #3CB371; }
+    #playlist a { background: #7CCD7C; }
+    #playlist a.playing { background: #9ACD32; font-weight: bold; color: red;}
+    #playlist a:hover { background: #EEC900;}
+    </style>
+    <script type="text/javascript">
+    var root = "music/";
+    var path = [];
+    var ci = 0;
+    var aud = document.getElementById('player');
+    var init = function() {
+        load(path);
+        $('#player').bind('ended', next);
+        $('#next').click(next);
+        $('#prev').click(prev);
+        $('#play').click(togglePlay);
+    }
+
+    function seekMusic() {
+        fastSeek()
+    }
+    function togglePlay(e){
+        if(aud.paused){
+            if($('#player').attr("src") != "") {
+                aud.play();
+                $("#play").text("| |");
+            }
+        } else {
+            aud.pause();
+            $("#play").text("| >");
+        }
+    }
+
+    function getMusicListing(){
+        console.log(`${window.location}api/music/list`);
+        axios.get(`${window.location}api/music/list`)
+        .then(response => {
+            // JSON responses are automatically parsed.
+            if(response.data.music != [])
+                listFile(response.data.music)
+            else 
+                var $b = $('#playlist').empty();
+        })
+        .catch(e => {
+            console.log(e);
+            //TODO
+        })
+    }
+    function load(path)  {
+        getMusicListing()
+    }
+    function listFile(files) {
+        var $b = $('#playlist').empty();
+        function addToList(i, f) {
+            $('<a></a>').text(f).data('file', root + f)
+                .addClass("file")
+                .appendTo($b)
+                .click(clickFile);
+        }
+        $.each(files, addToList);
+    }
+     
+    function clickFile(e) {
+        if($('#playlist a').attr('src') == root + $(this).html()){
+            aud.currentTime = 0;
+            return;
+        }
+        $('#playlist a').removeClass('playing');
+        $(e.target).addClass('playing');
+        $('#player').attr('src', root + $(this).html());
+        $("#play").text("| |");
+        aud.play();
+    }
+
+    function next() {
+        var els = document.getElementsByClassName("playing");
+        if(!els.length || els == undefined)
+            return
+        var mp = document.getElementById('playlist');
+        if(mp.children.length == 0)
+            return;
+        if(mp.children.length == 1)
+            aud.currentTime = 0;
+        else {
+            var i = 0, t = document.getElementsByClassName("file"), c = els[0];
+            while(i < mp.children.length && mp.children[i].text != c.text)
+                i++
+            ind = mp.children.length - (i + 1) ? i + 1 : 0; 
+            $(c).removeClass('playing');
+            $(mp.children[ind]).addClass('playing');
+            aud.pause();
+            $('#player').attr('src', root + mp.children[ind].text);
+            try {
+                aud.play();
+                $("#play").text("| |");
+            } catch (e) {
+                console.log(e);
+                $("#play").text("| >");
+            }
+        }
+    }
+
+    function prev() {
+        var els = document.getElementsByClassName("playing");
+        if(!els.length || els == undefined)
+            return
+        var mp = document.getElementById('playlist');
+        if(mp.children.length == 0)
+            return;
+        if(mp.children.length == 1)
+            mp.currentTime = 0;
+        else {
+            var i = 0, c = els[0];
+            while(mp.children[i].text != $(c).text())
+                i++;
+            ind = i ? i - 1 : mp.children.length - 1;
+            $(c).removeClass('playing');
+            $(mp.children[ind]).addClass('playing');
+            aud.pause();
+            $('#player').attr('src', root + mp.children[ind].text);
+            try {
+                aud.play();
+                $("#play").text("| |");
+            } catch (e) {
+                console.log(e);
+                $("#play").text("| >");
+            }
+        }
+    }
+    var ind = 0;
+    $("#search").keyup(function(e) {
+        console.log("!!" + $("#search").val());
+        i = 0, t = document.getElementsByClassName("file");
+        if(!t.length){
+            $("#results").text("No Results");
+            console.log("test1", mp.children[i].text);
+            return;
+        }
+        while(i < t.length){
+            if(t[i].text.indexOf($("#search").val()) >= 0){
+                console.log("test", t[i].text);
+                $("#results").text(t[i].text);
+                return;
+            } else {
+                console.log("test", t[i].text);
+                i++;
+            }
+        }
+        $("#results").val("No Results");
+    });
+    document.addEventListener("keyup", function(e){
+        if(e.target.id == "search" && $("#search").val() != ""){
+            i = 0, t = document.getElementsByClassName("file");
+            if(!t.length){
+                $("#results").text("No Results");
+                return;
+            }
+            while(i < t.length){
+                if(t[i].text.toLowerCase().indexOf($("#search").val().toLowerCase()) >= 0){
+                    $("#results").text(t[i].text);
+                    return;
+                } else {
+                    i++;
+                }
+            }
+            $("#results").text("No Results");
+        } else {
+            $("#results").text("");
+        }
+    })
+    document.addEventListener("keydown", function(e){
+        switch(e.which){
+            case 9:     //tab
+                document.getElementById("tb").click();
+                $("#search").focus();
+                e.preventDefault();
+                break;
+            case 13:    //enter 
+                switch(document.activeElement.id){
+                    case "search":
+                        console.log($("#search").val());
+                        var i = 0, t = document.getElementsByClassName("file");
+                        if(!t.length){
+                            $("#results").text("No Results");
+                            return;
+                        }
+                        while(i < t.length){
+                            if(t[i].text.toLowerCase().indexOf($("#search").val().toLowerCase()) >= 0){
+                                $("a.playing").removeClass('playing');
+                                $(t[i]).addClass('playing');
+                                $('#player').attr('src', root + t[i].text);
+                                aud.play();
+                                $("#search").val("");
+                                $("#results").text("");
+                                e.preventDefault();
+                                return;
+                            } else {
+                                i++;
+                            }
+                        }
+                        $("#results").text("No Results");
+                }
+                break;
+            case 20:    //caps lock
+                togglePlay();
+                break;
+            case 37:    //left arrow
+                prev();
+                break;
+            case 39:    //right arrow
+                next();
+                break;
+        }
+    })
+    google.setOnLoadCallback(init);
+    </script>
+    <body>
+        <nav id="navb" class="navbar navbar-toggleable-md navbar-light bg-faded">
+            <button id="tb" class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a id="title" class="navbar-brand">GoStream</a>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <div id="control" class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-4 sb">
+                            <span class="align-top"><BUTTON class="btn tb" id="prev" title = "prev this song!"><<</BUTTON></span>
+                        </div>
+                        <div class="col-sm-4">
+                            <span class="align-top"><BUTTON class="btn tb" id ="play" >| ></BUTTON></span>
+                        </div>
+                        <div class="col-sm-4 sb">
+                            <span class="align-top"><BUTTON class="btn tb" id ="next" title = "skip this song!">>></BUTTON></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <input id="search" class="form-control mr-sm-2" type="text" placeholder="Search">
+                        <span id="results"></span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div id="songs" class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <audio id="player" autobuffer>
+                        <p>What? Your browser doesn't support</p>
+                    </audio>
+                </div>
+            </div>
+            <div class="row">
+                <div id="playlist" class="col-sm-12"></div>
+            </div>
+        </div>        
+        <!--iframe width="300" height="24" src="http://www.youtube.com/embed/ygfXKbcW8wQ?rel=0&autohide=0&#8243" frameborder="0" allowfullscreen></iframe-->
+    </body>
+</html>
