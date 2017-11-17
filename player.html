@@ -32,11 +32,11 @@
     }
 
     #navb {
-        background-color: rgb(0, 128, 90);
+        background-color: #11CDAA;
     }
 
     #songs {
-        background-color: #EEFFEE;
+        background-color: #11CDCC;;
     }
 
     #title {
@@ -125,7 +125,6 @@
     var root = "music/";
     var path = [];
     var ci = 0;
-    var aud = document.getElementById('player');
     var init = function() {
         load(path);
         $('#player').bind('ended', next);
@@ -138,13 +137,13 @@
         fastSeek()
     }
     function togglePlay(e){
-        if(aud.paused){
-            if($('#player').attr("src") != "") {
-                aud.play();
+        if(document.getElementById('player').paused){
+            if($('player').attr("src") != "") {
+                document.getElementById('player').play();
                 $("#play").text("| |");
             }
         } else {
-            aud.pause();
+            document.getElementById('player').pause();
             $("#play").text("| >");
         }
     }
@@ -180,14 +179,14 @@
      
     function clickFile(e) {
         if($('#playlist a').attr('src') == root + $(this).html()){
-            aud.currentTime = 0;
+            document.getElementById('player').currentTime = 0;
             return;
         }
         $('#playlist a').removeClass('playing');
         $(e.target).addClass('playing');
         $('#player').attr('src', root + $(this).html());
         $("#play").text("| |");
-        aud.play();
+        document.getElementById('player').play();
     }
 
     function next() {
@@ -198,7 +197,7 @@
         if(mp.children.length == 0)
             return;
         if(mp.children.length == 1)
-            aud.currentTime = 0;
+            document.getElementById('player').currentTime = 0;
         else {
             var i = 0, t = document.getElementsByClassName("file"), c = els[0];
             while(i < mp.children.length && mp.children[i].text != c.text)
@@ -206,10 +205,10 @@
             ind = mp.children.length - (i + 1) ? i + 1 : 0; 
             $(c).removeClass('playing');
             $(mp.children[ind]).addClass('playing');
-            aud.pause();
+            document.getElementById('player').pause();
             $('#player').attr('src', root + mp.children[ind].text);
             try {
-                aud.play();
+                document.getElementById('player').play();
                 $("#play").text("| |");
             } catch (e) {
                 console.log(e);
@@ -234,10 +233,10 @@
             ind = i ? i - 1 : mp.children.length - 1;
             $(c).removeClass('playing');
             $(mp.children[ind]).addClass('playing');
-            aud.pause();
+            document.getElementById('player').pause();
             $('#player').attr('src', root + mp.children[ind].text);
             try {
-                aud.play();
+                document.getElementById('player').play();
                 $("#play").text("| |");
             } catch (e) {
                 console.log(e);
@@ -307,7 +306,7 @@
                                 $("a.playing").removeClass('playing');
                                 $(t[i]).addClass('playing');
                                 $('#player').attr('src', root + t[i].text);
-                                aud.play();
+                                document.getElementById('player').play();
                                 $("#search").val("");
                                 $("#results").text("");
                                 e.preventDefault();
@@ -358,18 +357,17 @@
                 </div>
             </div>
         </nav>
-        <div id="songs" class="container-fluid">
+        <div id="songs" class="container-fluid">
+            <audio id="player" autobuffer>
+                <p>What? Your browser doesn't support</p>
+            </audio>
             <div class="row">
-                <div class="col-sm-12">
-                    <audio id="player" autobuffer>
-                        <p>What? Your browser doesn't support</p>
-                    </audio>
+                <div id="playlist" class="col-sm-12">
+                    
                 </div>
             </div>
-            <div class="row">
-                <div id="playlist" class="col-sm-12"></div>
-            </div>
-        </div>        
+        </div>
+        
         <!--iframe width="300" height="24" src="http://www.youtube.com/embed/ygfXKbcW8wQ?rel=0&autohide=0&#8243" frameborder="0" allowfullscreen></iframe-->
     </body>
 </html>
