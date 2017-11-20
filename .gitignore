@@ -1,5 +1,5 @@
 *.exe
 *.mp3
 music/*.js*
-music/bundle/
+music/bundles/
 *.json
