@@ -1,20 +1,20 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
 type FileInfo struct {
-	Name  string
-	IsDir bool
-	Mode  os.FileMode
+	Length string `json:"length"`
+	Name   string `json:"name"`
 }
 
 const (
@@ -23,6 +23,16 @@ const (
 )
 
 func main() {
+	d := []FileInfo{}
+	if r, err := os.Open("data.json"); err == nil {
+		if b, err := ioutil.ReadAll(bufio.NewReader(r)); err == nil {
+			json.Unmarshal(b, &d)
+		} else {
+			fmt.Printf("ERROR 1:\n%v\n", err)
+		}
+	} else {
+		fmt.Printf("ERROR 2:\n%v\n", err)
+	}
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		http.ServeFile(c.Writer, c.Request, "./player.html")
@@ -32,7 +42,7 @@ func main() {
 	r.GET("/api/music/:var", func(c *gin.Context) {
 		switch c.Param("var") {
 		case "list":
-			matches, err := filepath.Glob("./music/*.mp3")
+			/*matches, err := filepath.Glob("./music/*.mp3")
 			for i, v := range matches {
 				matches[i] = strings.TrimPrefix(v, "\\")
 				//matches[i] = strings.TrimPrefix(v, "*\\")
@@ -41,9 +51,10 @@ func main() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			fmt.Println(matches)
+			fmt.Println(matches)*/
+			fmt.Println(d)
 			c.JSON(200, gin.H{
-				"music": matches,
+				"list": d,
 			})
 		}
 	})
